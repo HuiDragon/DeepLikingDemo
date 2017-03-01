@@ -32,14 +32,18 @@ demoSrc: [https://github.com/vipulvpatil/deeplinking-in-ios]
 
 ### 2. 处理你的深度链接 URL
 现在，你已经确认你的 deep linking 可以正常工作，我们需要处理用于登陆app的这个url。目前的状态时，你的app可以通过使用这个简单的url登陆，但是它除此之外还不能做些其他的事情。如果想要做更多的事情，我们需要复写AppDelegate中的一个函数：
-'' // 处理 url scheme
-'' - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
-''     return YES;
-'' }
-'' - (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options {
-'' 
-''     return YES;
-'' }
+
+```objc
+ // 处理 url scheme（iOS 4.2 ~ iOS 9）
+ - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
+     return YES;
+ }
+ //iOS 9 之后使用这个方法
+ - (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options {
+ 
+     return YES;
+}
+```
 
 **注意：上面的方法并非默认存在，需要我们自己添加。**这个方法在你的app使用url-scheme方式登陆的时候调用。传入的参数依次为：
 - **url**： 用于启动应用程序完成的url；
@@ -56,13 +60,16 @@ url 的格式如下：
 通常情况下，你是使用**host**和**path**来定位用户打开的页面的。
 
 这个方法实际的内容可以依据你的特殊需要来定，基于本篇文章的目的，我们的需求是：根据不同的host和path加载一个特定的 ViewController
-'' -(BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation{
-''   if([[url host] isEqualToString:@"page"]){
-''     if([[url path] isEqualToString:@"/page1"]){
-''       [self.mainController pushViewController:[[Page1ViewController alloc] init] animated:YES];
-''     }
-''  return YES;
-'' }
+
+```objc
+-(BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation{
+	   if([[url host] isEqualToString:@"page"]){
+	     if([[url path] isEqualToString:@"/page1"]){
+	       [self.mainController pushViewController:[[One alloc] init] animated:YES];
+	     }
+	return YES;
+}
+```
 
 在第 2 行检查 url 中host和我们程序中定义的是否一致，也就是是否和“page”相同。匹配之后，就会根据不同的path来加载不同的控制器了。通过这种方式我们就可以处理任何一个我们定义过的url来展示不同的页面。但是有一点需要注意，app可以通过url启动，无论这个函数是否可以处理这个url。在这种情况下，我们在该方法中返回 NO 告诉iOS，这个网址不是有该应用程序来处理的。
 
@@ -73,29 +80,45 @@ url 的格式如下：
 - dlapp：// page / page
 
 这里是处理上述网址的完整demo：
+```objc
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
+    
+    UINavigationController *nav = (UINavigationController *)application.keyWindow.rootViewController;
+    UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+    if([[url host] isEqualToString:@"page"]){
+        if([[url path] isEqualToString:@"/main"]){
+            [nav popToRootViewControllerAnimated:YES];
+        }
+        else if([[url path] isEqualToString:@"/page1"]){
+            UIViewController    *oneVC = [storyboard instantiateViewControllerWithIdentifier:@"one"];
+            [nav  pushViewController:oneVC animated:YES];
+        }
+        else if([[url path] isEqualToString:@"/page2"]){
+            UIViewController    *twoVC = [storyboard instantiateViewControllerWithIdentifier:@"two"];
+            [nav pushViewController:twoVC animated:YES];
+        }
+        else if([[url path] isEqualToString:@"/page3"]){
+            UIViewController    *threeVC = [storyboard instantiateViewControllerWithIdentifier:@"three"];
+            [nav pushViewController:threeVC animated:YES];
+        }
+        else{
+            return NO;
+        }
+        return YES;
+    }
+    else{
+        return NO;
+    }
+    
+}
 
-'' if([[url host] isEqualToString:@"page"]){
-''     if([[url path] isEqualToString:@"/main"]){
-''       [self.mainController setViewControllers:@[[[DLViewController alloc] init]] animated:YES];
-''     }
-''     else if([[url path] isEqualToString:@"/page1"]){
-''       [self.mainController pushViewController:[[Page1ViewController alloc] init] animated:YES];
-''     }
-''     else if([[url path] isEqualToString:@"/page2"]){
-''       [self.mainController pushViewController:[[Page2ViewController alloc] init] animated:YES];
-''     }
-''     else if([[url path] isEqualToString:@"/page3"]){
-''       [self.mainController pushViewController:[[Page3ViewController alloc] init] animated:YES];
-''     }
-''     else{
-''       return NO;
-''     }
-''     return YES;
-''   }
-''   else{
-''     return NO;
-''   }
+//ios9以后用这个
+- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<NSString *,id> *)options {
+    NSString *sourceApp = [options objectForKey:UIApplicationOpenURLOptionsSourceApplicationKey];
+    return [self application:app openURL:url sourceApplication:sourceApp annotation:options];
+}
 
+```
 ## 结论
 文章中一app处理url跳转到不同的页面展示了URl Scheme 的基础功能。通过拆分 url 我们可以做更多的事情：
 1. 自定义打开页面的外观
