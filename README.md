@@ -65,7 +65,7 @@ url 的格式如下：
 -(BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation{
 	   if([[url host] isEqualToString:@"page"]){
 	     if([[url path] isEqualToString:@"/page1"]){
-	       [self.mainController pushViewController:[[One alloc] init] animated:YES];
+	       [self.mainController pushViewController:[[OneVC alloc] init] animated:YES];
 	     }
 	return YES;
 }
@@ -121,6 +121,7 @@ url 的格式如下：
 ```
 ## 结论
 文章中一app处理url跳转到不同的页面展示了URl Scheme 的基础功能。通过拆分 url 我们可以做更多的事情：
+
 1. 自定义打开页面的外观
 2. 预先填充到页面上某些元素
 3. 跟踪用户如何访问你的应用 
